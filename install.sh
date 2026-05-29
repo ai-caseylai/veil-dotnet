@@ -97,6 +97,12 @@ cat("R packages: DONE\n")
 ' 2>&1 | tail -3
 log "R packages: OK"
 
+# --- Sample data ---
+warn "Generating sample transaction data..."
+source "$REPO_DIR/venv/bin/activate"
+python "$REPO_DIR/generate_sample_data.py"
+log "Sample data: OK"
+
 # --- Start services ---
 echo ""
 echo "========================================"
