@@ -175,9 +175,8 @@ plotTransitionInteractive <- function(transProb, threshold, height = 640,
   }
   
   transProb2Graph <- function(probs = transProb, thres = threshold) {
-    transProbDf <- as.data.table(melt(probs, value.name = "Prob", 
-                                      varnames = c("From", "To"), 
-                                      variable.factor = FALSE))
+    transProbDf <- as.data.table(as.data.frame(probs), keep.rownames = "From")
+    transProbDf <- melt(transProbDf, id.vars = "From", variable.name = "To", value.name = "Prob")
     transProbDf <- transProbDf[Prob > threshold]
     nodeIdMap <- factor(unique(transProbDf$To))
     transProbDf$To <- factor(transProbDf$To, nodeIdMap)
@@ -279,7 +278,7 @@ predictSegmentMovement <- function(initProp, transProb, nCustomer,
   }
   predictedSegment <- predictedSegment * nCustomer
   row.names(predictedSegment) <- c(0:nperiod)
-  predictedSegment <- melt(predictedSegment)
+  predictedSegment <- melt(as.data.table(predictedSegment, keep.rownames = "Time"), id.vars = "Time", variable.name = "Segment", value.name = "Predicted")
   colnames(predictedSegment) <- c("Time", "Segment", "Predicted")
   return(predictedSegment)
 }

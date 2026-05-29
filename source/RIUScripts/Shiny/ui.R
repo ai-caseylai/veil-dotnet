@@ -49,6 +49,7 @@ rfmOverview <- fluidPage(
     fluidRow(
       column(12,
              h3("Number of Customers by Segment"),
+             verbatimTextOutput("debugStatus"),
              dataTableOutput("noOfCustomerPerSegmemtTable"),
              fixedRow(
               htmlOutput("noOfCustomerPerSegmemtPie", inline = FALSE)
@@ -65,11 +66,7 @@ rfmCharacteristics <- fluidPage(
            h3(textOutput("noOfCustomerByStatsTitle", inline = TRUE), 
               actionButton("noOfCustomerByStatsBtn", "", 
                            icon = icon("exchange"))),
-           selectInput("rfmCharacteristicsSegmentSelector", "Segment:", 
-                       c("All"), selected = "All"),
-           fixedRow(
-             htmlOutput("noOfCustomerByStats", inline = FALSE)
-           ),
+           uiOutput("noOfCustomerByStatsAllSegments"),
            h3(textOutput("avgStatsTitle", inline = TRUE),
               actionButton("avgStatsBtn", "", icon = icon("exchange"))
            ),
