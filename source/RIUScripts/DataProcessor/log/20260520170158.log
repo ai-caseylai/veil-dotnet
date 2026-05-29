@@ -1,0 +1,178 @@
+Uncaught exception GET /api?bu=107&attributes=MemberID,OrderID,Timestamp,NetPrice,Quantity (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:8888', method='GET', uri='/api?bu=107&attributes=MemberID,OrderID,Timestamp,NetPrice,Quantity', version='HTTP/1.1', remote_ip='127.0.0.1')
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ~~~~^^^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 48, in mapstar
+    return list(map(*args))
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 310, in mapper
+    return df[attributes]
+           ~~^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/frame.py", line 4384, in __getitem__
+    indexer = self.columns._get_indexer_strict(key, "columns")[1]
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/indexes/base.py", line 6302, in _get_indexer_strict
+    self._raise_if_missing(keyarr, indexer, axis_name)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/indexes/base.py", line 6355, in _raise_if_missing
+    raise KeyError(f"{not_found} not in index")
+KeyError: "['NetPrice'] not in index"
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/web.py", line 1880, in _execute
+    result = await result
+             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 796, in run
+    yielded = self.gen.throw(exc)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 299, in get
+    res_out = yield self.split_apply_combine(bu, agg_type, keys,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             attributes, period, period_unit,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             cumqty_type)
+                                             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 783, in run
+    value = future.result()
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 250, in split_apply_combine
+    result = mr.map_reduce(mapper_tmp, reducer_tmp,
+                           [os.path.join(data_path, f) for f in files] +
+                           glob.glob(os.path.join(data_path, "*/*.csv.xz")),
+                           keys_combine, func_combine)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 409, in map_reduce
+    map_results = pool.map(mapper, files)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 774, in get
+    raise self._value
+KeyError: "['NetPrice'] not in index"
+500 GET /api?bu=107&attributes=MemberID,OrderID,Timestamp,NetPrice,Quantity (127.0.0.1) 2159.99ms
+Uncaught exception GET /api?bu=107&type=rfm (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:8888', method='GET', uri='/api?bu=107&type=rfm', version='HTTP/1.1', remote_ip='127.0.0.1')
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ~~~~^^^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 48, in mapstar
+    return list(map(*args))
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 347, in mapper
+    return func_copy(df)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 249, in extract_rfm_data
+    spending_amt_df = amt_of_spending(df)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 145, in amt_of_spending
+    df_temp = df[attri]
+              ~~^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/frame.py", line 4384, in __getitem__
+    indexer = self.columns._get_indexer_strict(key, "columns")[1]
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/indexes/base.py", line 6302, in _get_indexer_strict
+    self._raise_if_missing(keyarr, indexer, axis_name)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/indexes/base.py", line 6355, in _raise_if_missing
+    raise KeyError(f"{not_found} not in index")
+KeyError: "['NetPrice'] not in index"
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/web.py", line 1880, in _execute
+    result = await result
+             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 796, in run
+    yielded = self.gen.throw(exc)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 299, in get
+    res_out = yield self.split_apply_combine(bu, agg_type, keys,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             attributes, period, period_unit,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             cumqty_type)
+                                             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 783, in run
+    value = future.result()
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 250, in split_apply_combine
+    result = mr.map_reduce(mapper_tmp, reducer_tmp,
+                           [os.path.join(data_path, f) for f in files] +
+                           glob.glob(os.path.join(data_path, "*/*.csv.xz")),
+                           keys_combine, func_combine)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 409, in map_reduce
+    map_results = pool.map(mapper, files)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 774, in get
+    raise self._value
+KeyError: "['NetPrice'] not in index"
+500 GET /api?bu=107&type=rfm (127.0.0.1) 1369.86ms
+Uncaught exception GET /api?bu=107&type=frequency (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:8888', method='GET', uri='/api?bu=107&type=frequency', version='HTTP/1.1', remote_ip='127.0.0.1')
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ~~~~^^^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 48, in mapstar
+    return list(map(*args))
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 352, in reducer
+    output = func(df, vectorize=True)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 236, in tot_txn
+    return vec_tot_txn(extract[col_sel].as_matrix())
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/pandas/core/generic.py", line 6206, in __getattr__
+    return object.__getattribute__(self, name)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AttributeError: 'DataFrame' object has no attribute 'as_matrix'
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/web.py", line 1880, in _execute
+    result = await result
+             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 796, in run
+    yielded = self.gen.throw(exc)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 299, in get
+    res_out = yield self.split_apply_combine(bu, agg_type, keys,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             attributes, period, period_unit,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             cumqty_type)
+                                             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 783, in run
+    value = future.result()
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 250, in split_apply_combine
+    result = mr.map_reduce(mapper_tmp, reducer_tmp,
+                           [os.path.join(data_path, f) for f in files] +
+                           glob.glob(os.path.join(data_path, "*/*.csv.xz")),
+                           keys_combine, func_combine)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 436, in map_reduce
+    results = pool.map(partial(reducer, keys=keys), chunks)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/pool.py", line 774, in get
+    raise self._value
+AttributeError: 'DataFrame' object has no attribute 'as_matrix'
+500 GET /api?bu=107&type=frequency (127.0.0.1) 4619.63ms

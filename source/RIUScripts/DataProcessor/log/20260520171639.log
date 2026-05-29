@@ -1,0 +1,28 @@
+200 GET /api?bu=107&type=frequency (127.0.0.1) 6172.41ms
+200 GET /api?bu=107&type=rfm (127.0.0.1) 5254.64ms
+200 GET /api?bu=107&type=totspend (127.0.0.1) 5219.96ms
+200 GET /api?bu=107&type=cumqty (127.0.0.1) 6346.63ms
+200 GET /api?bu=107&type=recency (127.0.0.1) 5144.52ms
+200 GET /api?bu=107&type=avgspend (127.0.0.1) 5166.39ms
+Uncaught exception GET /api?bu=hko&aws=hko&begin=20200101&end=20200131 (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:8888', method='GET', uri='/api?bu=hko&aws=hko&begin=20200101&end=20200131', version='HTTP/1.1', remote_ip='127.0.0.1')
+Traceback (most recent call last):
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/web.py", line 1880, in _execute
+    result = await result
+             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 796, in run
+    yielded = self.gen.throw(exc)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 308, in get
+    res_out = yield self.get_weather_data(aws, attributes, period, agg_type)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 783, in run
+    value = future.result()
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 73, in get_weather_data
+    if dtype.lower() == 'd':
+       ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+500 GET /api?bu=hko&aws=hko&begin=20200101&end=20200131 (127.0.0.1) 1422.34ms

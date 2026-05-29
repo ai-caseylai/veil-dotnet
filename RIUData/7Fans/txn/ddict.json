@@ -1,0 +1,22 @@
+{
+    "type": {
+        "CardNumber": "str",
+        "MemberID": "str",
+        "OrderID": "str",
+        "Timestamp": "str",
+        "ProductID": "str",
+        "ProductName": "str",
+        "ProdName1": "str",
+        "Category": "str",
+        "DepartCode": "str",
+        "NetPrice": "float",
+        "Quantity": "int",
+        "Gender": "str"
+    },
+    "format": {
+        "Timestamp": "%Y-%m-%d %H:%M:%S"
+    },
+    "rename": {
+        "ProdName1": "ProductName"
+    }
+}

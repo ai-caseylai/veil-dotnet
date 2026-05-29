@@ -1,0 +1,29 @@
+Uncaught exception GET /api?bu=107 (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:8888', method='GET', uri='/api?bu=107', version='HTTP/1.1', remote_ip='127.0.0.1')
+Traceback (most recent call last):
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/web.py", line 1880, in _execute
+    result = await result
+             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 796, in run
+    yielded = self.gen.throw(exc)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 299, in get
+    res_out = yield self.split_apply_combine(bu, agg_type, keys,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             attributes, period, period_unit,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             cumqty_type)
+                                             ^^^^^^^^^^^^
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/venv/lib/python3.14/site-packages/tornado/gen.py", line 783, in run
+    value = future.result()
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/local/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce-driver.py", line 113, in split_apply_combine
+    ddict = mr.read_ddict(os.path.join(data_path, 'ddict.json'))
+  File "/Users/apple/Desktop/development/veil-dotnet/source/RIUScripts/DataProcessor/map_reduce.py", line 27, in read_ddict
+    ddict[key][inner_key] = eval(ddict_json[inner_key])
+                                 ~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'CardNumber'
+500 GET /api?bu=107 (127.0.0.1) 40.12ms
+200 GET /api?bu=holiday&begin=20200101&end=20200131 (127.0.0.1) 76.15ms

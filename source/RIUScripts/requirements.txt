@@ -1,0 +1,6 @@
+argparse >= 1.1
+beautifulsoup4 >= 4.6.3
+numpy >= 1.14.0
+pandas >= 0.22.0
+tornado >= 4.5.3
+workalendar >= 4.1.0
