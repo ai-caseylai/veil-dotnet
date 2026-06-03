@@ -38,6 +38,7 @@ sidebar <- dashboardSidebar(
              menuSubItem("Weather", tabName = "exo-weather")),
     menuItem("Customer Activity", icon = icon("dashboard"), 
              tabName = "customer-activity"),
+    menuItem("What-if Analysis", icon = icon("sliders"), tabName = "whatif"),
     menuItem("Setting", tabName = "setting", icon = icon("cog", 
                                                          lib = "glyphicon"))
   )
@@ -245,6 +246,55 @@ cutomerActivity <- fluidPage(
 )
 
 
+## What-if Analysis layout
+whatif <- fluidPage(
+  fluidRow(
+    column(4,
+      box(width = 12, title = "RFM Parameters", status = "primary", solidHeader = TRUE,
+        sliderInput("wi_maxScore", "Max Score", min = 3, max = 10, value = 5, step = 1),
+        sliderInput("wi_recencyWt", "Recency Weight", min = 1, max = 10, value = 4, step = 1),
+        sliderInput("wi_frequencyWt", "Frequency Weight", min = 1, max = 10, value = 4, step = 1),
+        sliderInput("wi_monetaryWt", "Monetary Weight", min = 1, max = 10, value = 4, step = 1),
+        checkboxInput("wi_thres", "Apply minTxn threshold", value = TRUE),
+        conditionalPanel("input.wi_thres == true",
+          sliderInput("wi_minTxn", "Min Transactions", min = 1, max = 10, value = 2, step = 1)
+        ),
+        br(),
+        actionButton("wi_apply", "Apply RFM Changes", icon = icon("refresh"), 
+                     style = "color: #fff; background-color: #337ab7; width: 100%")
+      ),
+      box(width = 12, title = "Regenerate Data", status = "warning", solidHeader = TRUE,
+        p("Re-run the full pipeline with new customer parameters."),
+        actionButton("wi_regenerate", "Regenerate 1000 Customers", icon = icon("database"),
+                     style = "color: #fff; background-color: #d9534f; width: 100%"),
+        br(), br(),
+        verbatimTextOutput("wi_regenerateStatus")
+      )
+    ),
+    column(8,
+      tabBox(width = 12,
+        tabPanel("Segment Distribution",
+          h4(textOutput("wi_segmentCount")),
+          dataTableOutput("wi_segmentTable"),
+          br(),
+          htmlOutput("wi_segmentPie", inline = FALSE)
+        ),
+        tabPanel("Average Stats",
+          h4(textOutput("wi_avgStatsTitle", inline = TRUE),
+             actionButton("wi_avgStatsBtn", "", icon = icon("exchange"))),
+          checkboxInput("wi_avgBySex", "Group by Gender", TRUE),
+          htmlOutput("wi_avgStatPlot", inline = FALSE)
+        ),
+        tabPanel("Customer Distribution",
+          h4(textOutput("wi_custDistTitle", inline = TRUE),
+             actionButton("wi_custDistBtn", "", icon = icon("exchange"))),
+          uiOutput("wi_custDistCharts")
+        )
+      )
+    )
+  )
+)
+
 ## Setting layout (hidden)
 setting <- fluidPage(
   titlePanel("Setting"),
@@ -275,6 +325,7 @@ body <- dashboardBody(
     tabItem(tabName = "exo-tourism", exoTourism),
     tabItem(tabName = "exo-weather", exoWeather),
     tabItem(tabName = "customer-activity", cutomerActivity),
+    tabItem(tabName = "whatif", whatif),
     tabItem(tabName = "setting", setting)
   )
 )

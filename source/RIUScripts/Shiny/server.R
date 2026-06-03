@@ -110,13 +110,17 @@ shinyServer(function(input, output, session) {
       }
       message("[DEBUG 4/9] current = ", presentSettingRv$current, ", rdsPath = ", presentSettingRv$rdsPath)
 
-      rdsFilename <- paste(paste(presentSettingRv$bu,
-                           format(presentSettingRv$current, "%Y%m%d"),
-                           sep = "_"), ".rds", sep = "")
-      message("[DEBUG 5/9] rdsFilename = ", rdsFilename)
-
-      rfmPath <- paste(presentSettingRv$rdsPath, "RFM_", rdsFilename, sep = "")
-      message("[DEBUG 6/9] Loading RFM: ", rfmPath, " (exists=", file.exists(rfmPath), ")")
+      # Find the actual RDS file regardless of date
+      findRDS <- function(path, prefix, bu) {
+        pattern <- paste0("^", prefix, bu, "_.*\\.rds$")
+        files <- list.files(path, pattern = pattern, full.names = TRUE)
+        if (length(files) == 0) stop("No RDS file found for ", prefix, bu, " in ", path)
+        # Sort by file modification time descending — pick the most recent
+        files <- files[order(file.info(files)$mtime, decreasing = TRUE)]
+        return(files[1])
+      }
+      rfmPath <- findRDS(presentSettingRv$rdsPath, "RFM_", presentSettingRv$bu)
+      message("[DEBUG 5/9] rfmPath = ", rfmPath, " (exists=", file.exists(rfmPath), ")")
       rfmlist <- readRDS(rfmPath)
       presentRFMRv$rfmData <- rfmlist$rfmData
       presentRFMRv$rfmScore <- rfmlist$rfmScore
@@ -131,14 +135,14 @@ shinyServer(function(input, output, session) {
                                                             presentRFMRv$rfmSegment)
       message("[DEBUG 8/9] customerSummary: ", nrow(presentRFMRv$customerSummary), " rows")
 
-      mcPath <- paste(presentSettingRv$rdsPath, "RFM_MC_", rdsFilename, sep = "")
+      mcPath <- findRDS(presentSettingRv$rdsPath, "RFM_MC_", presentSettingRv$bu)
       message("[DEBUG 9/9] Loading MC: ", mcPath, " (exists=", file.exists(mcPath), ")")
       mclist <- readRDS(mcPath)
       presentRFMTransitionRv$mcSeq <- mclist$mcSeq
       presentRFMTransitionRv$mcCounts <- mclist$mcCounts
       presentRFMTransitionRv$transProb <- mclist$transProb
 
-      ltvPath <- paste(presentSettingRv$rdsPath, "LTV_", rdsFilename, sep = "")
+      ltvPath <- findRDS(presentSettingRv$rdsPath, "LTV_", presentSettingRv$bu)
       message("[DEBUG 10/10] Loading LTV: ", ltvPath, " (exists=", file.exists(ltvPath), ")")
       ltvlist <- readRDS(ltvPath)
       presentLTVRv$customerSummary <- ltvlist$customerSummary
@@ -495,6 +499,180 @@ shinyServer(function(input, output, session) {
     },
     contentType = "text/csv"
   )
+
+  # =========================================================================
+  # WHAT-IF ANALYSIS — real-time parameter adjustment
+  # =========================================================================
+  wiRv <- reactiveValues(
+    rfmScore = NULL,
+    rfmSegment = NULL,
+    avgStatsType = "R",
+    custDistType = "F"
+  )
+
+  # When "Apply" is clicked, re-run rfmCompute + rfmSegmentation
+  observeEvent(input$wi_apply, {
+    req(presentRFMRv$rfmData)
+    tryCatch({
+      wiRv$rfmScore <- rfmCompute(presentRFMRv$rfmData,
+                                  max.score = input$wi_maxScore,
+                                  recencyWeight = input$wi_recencyWt,
+                                  frequencyWeight = input$wi_frequencyWt,
+                                  monetaryWeight = input$wi_monetaryWt,
+                                  thres = input$wi_thres,
+                                  minTxn = input$wi_minTxn)
+      wiRv$rfmSegment <- rfmSegmentation(wiRv$rfmScore)
+      message("[WHATIF] Recalculated: ", nrow(wiRv$rfmSegment), " segments")
+    }, error = function(e) {
+      message("[WHATIF ERROR] ", conditionMessage(e))
+    })
+  }, ignoreNULL = FALSE)
+
+  # Initialize with default values on first load
+  observe({
+    req(presentRFMRv$rfmScore, presentRFMRv$rfmSegment)
+    if (is.null(wiRv$rfmScore)) {
+      wiRv$rfmScore <- presentRFMRv$rfmScore
+      wiRv$rfmSegment <- presentRFMRv$rfmSegment
+    }
+  })
+
+  # -- Segment table --
+  output$wi_segmentCount <- renderText({
+    req(wiRv$rfmSegment)
+    paste0("Total: ", nrow(wiRv$rfmSegment), " customers in ",
+           length(unique(wiRv$rfmSegment$Segment)), " segments")
+  })
+
+  output$wi_segmentTable <- renderDataTable({
+    req(wiRv$rfmSegment, presentRFMRv$rfmData)
+    dt <- getNoOfCustomersPerSegment(presentRFMRv$rfmData, wiRv$rfmSegment, FALSE, TRUE)
+    cnames <- colnames(dt)
+    selectedColTotal <- (cnames == "Number of Customers")
+    percentColIdx <- which(cnames == "Percentage")
+    colTotalFooter <- rep("", length(selectedColTotal))
+    colTotalFooterJsCode <- paste(
+      "function(tfoot, data, start, end, display) {",
+      "var api = this.api(), data;",
+      "var cust_total = api.column(", which(selectedColTotal) - 1,
+      ").data().reduce(function(a,b){return a+b;});",
+      "$(api.column(", which(selectedColTotal) - 1, ").footer()).html('Total: ' + cust_total);",
+      "$(api.column(", percentColIdx - 1, ").footer()).html('Total: 100.00%');",
+      "}", sep = "")
+    sketch <- htmltools::withTags(table(tableHeader(cnames), tableFooter(colTotalFooter)))
+    DT::datatable(dt, class = 'compact', rownames = FALSE, container = sketch,
+                  options = list(lengthChange = FALSE, pageLength = 11,
+                                 searching = FALSE, dom = 't', ordering = TRUE,
+                                 footerCallback = JS(colTotalFooterJsCode))
+    ) %>% formatPercentage("Percentage", 2)
+  })
+
+  # -- Segment pie chart --
+  output$wi_segmentPie <- renderGvis({
+    req(wiRv$rfmSegment, presentRFMRv$rfmData)
+    plotNoOfCustomersPerSegment(presentRFMRv$rfmData, wiRv$rfmSegment, bySex = FALSE, interactive = TRUE)
+  })
+
+  # -- Average stats --
+  output$wi_avgStatsTitle <- renderText({
+    switch(wiRv$avgStatsType, "R" = "Average Recency (days)",
+           "F" = "Average Orders", "M" = "Average Spending ($)")
+  })
+
+  output$wi_avgStatPlot <- renderGvis({
+    req(wiRv$rfmSegment, presentRFMRv$rfmData, wiRv$rfmScore)
+    plotAvgStatPerSegment(presentRFMRv$rfmData, wiRv$rfmScore, wiRv$rfmSegment,
+                          wiRv$avgStatsType, input$wi_avgBySex)
+  })
+
+  observeEvent(input$wi_avgStatsBtn, {
+    wiRv$avgStatsType <- switch(wiRv$avgStatsType, "R" = "F", "F" = "M", "M" = "R")
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+  # -- Customer distribution --
+  output$wi_custDistTitle <- renderText({
+    if (wiRv$custDistType == "F") "Number of Customers by Orders"
+    else "Number of Customers by Total Spending"
+  })
+
+  output$wi_custDistCharts <- renderUI({
+    req(wiRv$rfmSegment, presentRFMRv$rfmData)
+    segments <- unique(wiRv$rfmSegment$Segment)
+    chart_list <- lapply(seq_along(segments), function(i) {
+      seg <- segments[i]
+      segCustomers <- wiRv$rfmSegment[Segment == seg, CustomerID]
+      segData <- presentRFMRv$rfmData[CustomerID %in% segCustomers]
+      if (nrow(segData) > 0) {
+        chart <- plotStatPerCustomer(segData, wiRv$custDistType)
+        tagList(
+          tags$h4(paste0(i, ". ", seg, " (", nrow(segData), " customers)")),
+          HTML(chart$html$chart),
+          tags$hr()
+        )
+      }
+    })
+    do.call(tagList, chart_list)
+  })
+
+  observeEvent(input$wi_custDistBtn, {
+    wiRv$custDistType <- switch(wiRv$custDistType, "F" = "M", "M" = "F")
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+  # -- Regenerate handler --
+  output$wi_regenerateStatus <- renderText({
+    if (is.null(wiRv$regenStatus)) return("Ready.")
+    wiRv$regenStatus
+  })
+
+  observeEvent(input$wi_regenerate, {
+    wiRv$regenStatus <- "Regenerating 1000 customers... (this takes ~15 sec)"
+    message("[WHATIF] Starting regeneration...")
+    # Run in background via system()
+    system("cd /Users/perry/Documents/veil; Rscript generate_synthetic_customers.R > /tmp/veil_regen.log 2>&1", wait = FALSE)
+    # Poll for completion
+    showNotification("Regeneration started — reloading in 20 seconds...", type = "warning", duration = 5)
+    # Invalidate to reload after delay
+    invalidateLater(20000)
+    wiRv$regenStatus <- "Running..."
+  })
+
+  # Auto-reload RDS after regeneration
+  observe({
+    invalidateLater(25000)
+    req(wiRv$regenStatus)
+    if (wiRv$regenStatus == "Running...") {
+      tryCatch({
+        # Reload the RDS files
+        rfmPath <- findRDS(presentSettingRv$rdsPath, "RFM_", presentSettingRv$bu)
+        rfmlist <- readRDS(rfmPath)
+        presentRFMRv$rfmData <- rfmlist$rfmData
+        presentRFMRv$rfmScore <- rfmlist$rfmScore
+        presentRFMRv$rfmSegment <- rfmlist$rfmSegment
+        if("MemberID" %in% colnames(presentRFMRv$rfmData)) {
+          setnames(presentRFMRv$rfmData, "MemberID", "CustomerID")
+        }
+
+        ltvPath <- findRDS(presentSettingRv$rdsPath, "LTV_", presentSettingRv$bu)
+        ltvlist <- readRDS(ltvPath)
+        presentLTVRv$customerSummary <- ltvlist$customerSummary
+
+        mcPath <- findRDS(presentSettingRv$rdsPath, "RFM_MC_", presentSettingRv$bu)
+        mclist <- readRDS(mcPath)
+        presentRFMTransitionRv$mcSeq <- mclist$mcSeq
+        presentRFMTransitionRv$mcCounts <- mclist$mcCounts
+        presentRFMTransitionRv$transProb <- mclist$transProb
+
+        # Reset what-if to match new data
+        wiRv$rfmScore <- presentRFMRv$rfmScore
+        wiRv$rfmSegment <- presentRFMRv$rfmSegment
+
+        wiRv$regenStatus <- paste0("Done! Reloaded at ", Sys.time())
+        showNotification("Regeneration complete — data reloaded!", type = "success", duration = 8)
+      }, error = function(e) {
+        wiRv$regenStatus <- paste("Error:", conditionMessage(e))
+      })
+    }
+  })
 
   # Handler on session ended
   session$onSessionEnded(function() {
