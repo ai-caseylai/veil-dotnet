@@ -526,7 +526,7 @@ shinyServer(function(input, output, session) {
     }, error = function(e) {
       message("[WHATIF ERROR] ", conditionMessage(e))
     })
-  }, ignoreNULL = FALSE)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
   # Initialize with default values on first load
   observe({
@@ -570,7 +570,10 @@ shinyServer(function(input, output, session) {
   # -- Segment pie chart --
   output$wi_segmentPie <- renderGvis({
     req(wiRv$rfmSegment, presentRFMRv$rfmData)
-    plotNoOfCustomersPerSegment(presentRFMRv$rfmData, wiRv$rfmSegment, bySex = FALSE, interactive = TRUE)
+    isolate({
+      plotNoOfCustomersPerSegment(presentRFMRv$rfmData, wiRv$rfmSegment,
+                                  bySex = FALSE, interactive = TRUE)
+    })
   })
 
   # -- Average stats --
@@ -581,9 +584,15 @@ shinyServer(function(input, output, session) {
 
   output$wi_avgStatPlot <- renderGvis({
     req(wiRv$rfmSegment, presentRFMRv$rfmData, wiRv$rfmScore)
-    plotAvgStatPerSegment(presentRFMRv$rfmData, wiRv$rfmScore, wiRv$rfmSegment,
-                          wiRv$avgStatsType, input$wi_avgBySex)
+    isolate({
+      plotAvgStatPerSegment(presentRFMRv$rfmData, wiRv$rfmScore, wiRv$rfmSegment,
+                            wiRv$avgStatsType, input$wi_avgBySex)
+    })
   })
+
+  # Suspend googleVis outputs when whatif tab is hidden
+  outputOptions(output, "wi_segmentPie", suspendWhenHidden = TRUE)
+  outputOptions(output, "wi_avgStatPlot", suspendWhenHidden = TRUE)
 
   observeEvent(input$wi_avgStatsBtn, {
     wiRv$avgStatsType <- switch(wiRv$avgStatsType, "R" = "F", "F" = "M", "M" = "R")
@@ -625,24 +634,14 @@ shinyServer(function(input, output, session) {
   })
 
   observeEvent(input$wi_regenerate, {
-    wiRv$regenStatus <- "Regenerating 1000 customers... (this takes ~15 sec)"
+    wiRv$regenStatus <- "Regenerating... (~15 sec)"
     message("[WHATIF] Starting regeneration...")
-    # Run in background via system()
+    showNotification("Regeneration started — page will auto-refresh in 25 seconds", type = "warning", duration = 8)
+    # Run in background
     system("cd /Users/perry/Documents/veil; Rscript generate_synthetic_customers.R > /tmp/veil_regen.log 2>&1", wait = FALSE)
-    # Poll for completion
-    showNotification("Regeneration started — reloading in 20 seconds...", type = "warning", duration = 5)
-    # Invalidate to reload after delay
-    invalidateLater(20000)
-    wiRv$regenStatus <- "Running..."
-  })
-
-  # Auto-reload RDS after regeneration
-  observe({
-    invalidateLater(25000)
-    req(wiRv$regenStatus)
-    if (wiRv$regenStatus == "Running...") {
+    # Schedule reload after delay
+    shinyjs::delay(25000, {
       tryCatch({
-        # Reload the RDS files
         rfmPath <- findRDS(presentSettingRv$rdsPath, "RFM_", presentSettingRv$bu)
         rfmlist <- readRDS(rfmPath)
         presentRFMRv$rfmData <- rfmlist$rfmData
@@ -651,28 +650,24 @@ shinyServer(function(input, output, session) {
         if("MemberID" %in% colnames(presentRFMRv$rfmData)) {
           setnames(presentRFMRv$rfmData, "MemberID", "CustomerID")
         }
-
         ltvPath <- findRDS(presentSettingRv$rdsPath, "LTV_", presentSettingRv$bu)
         ltvlist <- readRDS(ltvPath)
         presentLTVRv$customerSummary <- ltvlist$customerSummary
-
         mcPath <- findRDS(presentSettingRv$rdsPath, "RFM_MC_", presentSettingRv$bu)
         mclist <- readRDS(mcPath)
         presentRFMTransitionRv$mcSeq <- mclist$mcSeq
         presentRFMTransitionRv$mcCounts <- mclist$mcCounts
         presentRFMTransitionRv$transProb <- mclist$transProb
-
-        # Reset what-if to match new data
+        # Reset what-if
         wiRv$rfmScore <- presentRFMRv$rfmScore
         wiRv$rfmSegment <- presentRFMRv$rfmSegment
-
-        wiRv$regenStatus <- paste0("Done! Reloaded at ", Sys.time())
-        showNotification("Regeneration complete — data reloaded!", type = "success", duration = 8)
+        wiRv$regenStatus <- paste0("Done! ", Sys.time())
+        showNotification("Regeneration complete!", type = "message", duration = 8)
       }, error = function(e) {
         wiRv$regenStatus <- paste("Error:", conditionMessage(e))
       })
-    }
-  })
+    })
+  }, ignoreInit = TRUE)
 
   # Handler on session ended
   session$onSessionEnded(function() {

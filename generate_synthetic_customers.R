@@ -27,15 +27,23 @@ VALUE_MIN      <- 50
 VALUE_MAX      <- 800
 ITEMS_MIN      <- 1
 ITEMS_MAX      <- 6
-LIFESPAN_MEAN  <- 160
-LIFESPAN_SD    <- 80
+
+# Match existing recency distribution: 17-504 days, mean ~176, median ~159
+# Use a log-normal approximation calibrated to existing data
+RECENCY_MEANLOG <- 4.8
+RECENCY_SDLOG   <- 0.8
 
 # ---- Generate one customer ----
 gen_customer <- function(id) {
-  lifespan  <- max(14, round(rnorm(1, LIFESPAN_MEAN, LIFESPAN_SD)))
   interval  <- runif(1, FREQ_MIN_DAYS, FREQ_MAX_DAYS)
+  # Recency (days since last purchase) — match existing distribution
+  recency   <- min(500, max(10, round(rlnorm(1, RECENCY_MEANLOG, RECENCY_SDLOG))))
+  # Lifespan from first to last order
+  lifespan  <- max(14, round(runif(1, 30, 400)))
   n_orders  <- max(1, round(lifespan / interval))
-  first_day <- REFERENCE_DATE - round(runif(1, 10, lifespan + 30))
+  # Last order date = today - recency
+  last_day  <- REFERENCE_DATE - recency
+  first_day <- last_day - lifespan
   gender    <- sample(gender_dist$Gender, 1, prob = gender_dist$prob)
   
   rows <- vector("list", n_orders * ITEMS_MAX)  # pre-allocate
@@ -48,17 +56,26 @@ gen_customer <- function(id) {
     target   <- runif(1, VALUE_MIN, VALUE_MAX)
     picks    <- sample(nrow(existing_products), n_items, replace = TRUE)
     
-    for (i in seq_len(n_items)) {
+    # Calculate raw totals first, then scale to hit target
+    raw_items <- lapply(seq_len(n_items), function(i) {
       p <- existing_products[picks[i]]
       qty <- sample(1:3, 1)
-      price <- round(p$NetPrice * runif(1, 0.7, 1.5), 2)
-      card  <- sample(1e9:(1e10-1), 1)
+      price <- round(p$NetPrice * runif(1, 0.8, 1.3), 2)
+      list(p = p, qty = qty, price = price, subtotal = price * qty)
+    })
+    raw_total <- sum(sapply(raw_items, `[[`, "subtotal"))
+    scale_factor <- target / raw_total
+    
+    for (i in seq_len(n_items)) {
+      ri_item <- raw_items[[i]]
+      final_price <- round(ri_item$price * scale_factor, 2)
+      card <- sample(1e9:(1e10-1), 1)
       
       rows[[ri]] <- list(CardNumber = card, MemberID = sprintf("S%06d", id),
                          OrderID = oid, Timestamp = format(odate, "%Y-%m-%d 00:00:00"),
-                         ProductID = p$ProductID, ProdName1 = p$ProdName1,
-                         Category = p$Category, DepartCode = p$DepartCode,
-                         NetPrice = price, Quantity = qty, Gender = gender)
+                         ProductID = ri_item$p$ProductID, ProdName1 = ri_item$p$ProdName1,
+                         Category = ri_item$p$Category, DepartCode = ri_item$p$DepartCode,
+                         NetPrice = final_price, Quantity = ri_item$qty, Gender = gender)
       ri <- ri + 1
     }
   }
